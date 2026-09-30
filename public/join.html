@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#07080a" />
+    <title>Speaker — volume</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="wrap stack">
+      <div class="row between">
+        <div class="brand" style="margin: 0">
+          <div class="mark">◍</div>
+          <div class="name">volume</div>
+        </div>
+        <span class="pill" id="status"><span class="dot"></span><span>connecting</span></span>
+      </div>
+
+      <!-- Before the user taps: nothing can make sound yet --------------- -->
+      <div class="card hero" id="gate">
+        <div class="orb">🔇</div>
+        <div>
+          <h1>Room <span class="mono" id="codeBig"></span></h1>
+          <p class="muted small" style="margin-top: 6px">
+            Turn your ringer off silent and set your volume high. Tap below to become part of the
+            speaker.
+          </p>
+        </div>
+        <button class="primary big" id="enable">Tap to join the speaker</button>
+      </div>
+
+      <!-- After joining ------------------------------------------------- -->
+      <div class="stack hidden" id="live">
+        <div class="card hero" style="padding-top: 26px; padding-bottom: 26px">
+          <div class="orb" id="orb">♪</div>
+          <div>
+            <div class="title mono" id="trackTitle" style="font-weight: 650; font-size: 17px">
+              Waiting for the host
+            </div>
+            <div class="small muted" id="trackSub">You're connected and in sync</div>
+          </div>
+        </div>
+
+        <!-- Only shown when the host switches the room to Spotify --------- -->
+        <div class="card stack hidden" id="spotifyCard">
+          <div class="row between">
+            <h2>Spotify</h2>
+            <span class="pill" id="spotifyStatus"><span class="dot"></span><span>not connected</span></span>
+          </div>
+          <p class="small muted" id="spotifyExplain">
+            The host is playing from Spotify. Because one Spotify account only plays on one device
+            at a time, this phone needs its own Premium account signed in — and the room will sit
+            around a tenth of a second apart rather than in tight sync.
+          </p>
+          <button class="primary big" id="spotifyLogin">Connect Spotify</button>
+          <div class="small muted" id="spotifyDetail"></div>
+        </div>
+
+        <div class="card stack">
+          <div class="row between">
+            <h2>Alignment</h2>
+            <span class="pill" id="driftPill"><span class="dot"></span><span>—</span></span>
+          </div>
+          <div class="meter">
+            <div class="centre"></div>
+            <div class="needle" id="needle"></div>
+            <div class="label">−50ms &nbsp;&nbsp;&nbsp; 0 &nbsp;&nbsp;&nbsp; +50ms</div>
+          </div>
+          <p class="small muted">
+            How far this phone's audio is from the rest of the room. It corrects itself
+            continuously — you should see it hovering near the middle.
+          </p>
+        </div>
+
+        <div class="card stack">
+          <div class="row between">
+            <h2>This phone</h2>
+            <span class="pill" id="channelPill"><span class="dot"></span><span>stereo</span></span>
+          </div>
+
+          <div class="row between small muted">
+            <span>Volume</span><span class="mono" id="gainValue">100%</span>
+          </div>
+          <input type="range" id="gain" min="0" max="100" value="100" />
+
+          <div class="row between small muted" style="margin-top: 4px">
+            <span>Latency trim</span><span class="mono" id="trimValue">0ms</span>
+          </div>
+          <input type="range" id="trim" min="-200" max="200" step="5" value="0" />
+          <p class="small muted">
+            If this phone sounds slightly behind the others, drag right. If it sounds ahead, drag
+            left. Most phones need nothing.
+          </p>
+
+          <div class="row" style="gap: 8px">
+            <input type="text" id="name" maxlength="24" placeholder="Name this phone" />
+            <button id="rename">Save</button>
+          </div>
+        </div>
+
+        <div class="card stack small muted">
+          <p>
+            Keep this screen on and this tab in front. If the phone sleeps, iOS and Android will
+            stop the audio — it rejoins in sync automatically when you wake it.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <script type="module" src="/js/join.js"></script>
+  </body>
+</html>

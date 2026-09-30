@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#07080a" />
+    <title>Host — volume</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="wrap stack">
+      <div class="row between">
+        <div class="brand" style="margin: 0">
+          <div class="mark">◍</div>
+          <div class="name">volume</div>
+        </div>
+        <span class="pill" id="status"><span class="dot"></span><span>connecting</span></span>
+      </div>
+
+      <!-- Room identity ------------------------------------------------- -->
+      <div class="card row wrap" style="gap: 18px">
+        <img class="qr" id="qr" alt="QR code to join this room" />
+        <div class="stack grow" style="gap: 10px">
+          <div>
+            <div class="small muted">Room code</div>
+            <div class="code" id="code">····</div>
+          </div>
+          <div class="small muted" id="joinUrl"></div>
+          <div class="row wrap" style="gap: 8px">
+            <button class="icon" id="copyLink">Copy link</button>
+            <button class="icon" id="shareLink">Share</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mode ---------------------------------------------------------- -->
+      <div class="row between wrap">
+        <div class="seg" id="modeSeg">
+          <button data-mode="file" aria-pressed="true">Library</button>
+          <button data-mode="spotify" aria-pressed="false">Spotify</button>
+          <button data-mode="live" aria-pressed="false">Live</button>
+        </div>
+        <span class="pill" id="speakerCount"><span class="dot"></span><span>0 speakers</span></span>
+      </div>
+
+      <!-- File mode ----------------------------------------------------- -->
+      <div id="fileMode" class="stack">
+        <div class="card stack">
+          <div class="row between">
+            <h2>Library</h2>
+            <div class="seg" id="sourceSeg">
+              <button data-source="upload" aria-pressed="true">Upload</button>
+              <button data-source="catalog" aria-pressed="false">Search</button>
+            </div>
+          </div>
+          <div class="list" id="tracks"></div>
+
+          <div id="uploadPane" class="stack">
+            <div class="drop" id="drop">
+              Drop audio here, or tap to choose a file
+              <input type="file" id="file" accept="audio/*" multiple hidden />
+            </div>
+            <div class="scrub hidden" id="uploadBar"><div class="fill" id="uploadFill"></div></div>
+          </div>
+
+          <div id="catalogPane" class="stack hidden">
+            <form class="row" id="catalogForm">
+              <input class="grow" type="text" id="catalogQuery" placeholder="Search for a song…" autocomplete="off" />
+              <button class="primary" type="submit">Search</button>
+            </form>
+            <div class="list" id="catalogResults"></div>
+            <p class="small muted">
+              Streamed from Audius, an open catalog. The server downloads each track once and
+              serves it to every phone — so these play with the same accuracy as your own files.
+            </p>
+          </div>
+        </div>
+
+        <div class="card stack" id="transport">
+          <div class="row between">
+            <div class="grow" style="min-width: 0">
+              <div class="title mono" id="nowPlaying" style="font-weight: 650">Nothing loaded</div>
+              <div class="small muted" id="nowSub">Pick a track to load it on every phone</div>
+            </div>
+          </div>
+
+          <div class="scrub" id="scrub"><div class="fill" id="scrubFill"></div></div>
+          <div class="row between small muted mono">
+            <span id="elapsed">0:00</span><span id="duration">0:00</span>
+          </div>
+
+          <div class="row" style="gap: 8px">
+            <button class="primary grow" id="playPause" disabled>Play</button>
+            <button id="stop" disabled>Stop</button>
+            <button id="loop" aria-pressed="false">Loop</button>
+          </div>
+
+          <div class="stack" style="gap: 6px">
+            <div class="row between small muted">
+              <span>Room volume</span><span class="mono" id="masterValue">100%</span>
+            </div>
+            <input type="range" id="master" min="0" max="100" value="100" />
+          </div>
+        </div>
+      </div>
+
+      <!-- The host phone as a speaker too ------------------------------- -->
+      <div class="card stack" id="hostPlayback">
+        <div class="row between">
+          <div>
+            <h2>Play on this phone too</h2>
+            <div class="small muted" id="hostPlayState">Off — this phone is only the remote</div>
+          </div>
+          <button class="primary" id="hostPlayToggle">Turn on</button>
+        </div>
+        <div class="stack hidden" id="hostPlayControls" style="gap: 10px">
+          <div class="seg" id="hostChannel">
+            <button data-channel="stereo" aria-pressed="true">Stereo</button>
+            <button data-channel="left" aria-pressed="false">Left</button>
+            <button data-channel="right" aria-pressed="false">Right</button>
+          </div>
+          <div class="row between small muted">
+            <span>Volume</span><span class="mono" id="hostGainValue">100%</span>
+          </div>
+          <input type="range" id="hostGain" min="0" max="100" value="100" />
+        </div>
+      </div>
+
+      <!-- Spotify mode -------------------------------------------------- -->
+      <div id="spotifyMode" class="stack hidden">
+        <div class="card stack">
+          <div class="row between">
+            <h2>Spotify</h2>
+            <span class="pill" id="spotifyStatus"><span class="dot"></span><span>not connected</span></span>
+          </div>
+
+          <div class="card" style="background: var(--surface-2); border-color: #453318">
+            <p class="small" style="color: var(--warn); font-weight: 600">
+              Roughly ±150&nbsp;ms, not ±1&nbsp;ms
+            </p>
+            <p class="small muted" style="margin-top: 6px">
+              Spotify's audio is DRM-protected, so none of the drift correction, latency
+              compensation or stereo splitting can reach it — the phones can only be told to seek
+              to the same position. Expect a noticeable echo across the room. Every listener also
+              needs their own Premium account, because one account plays on one device at a time.
+            </p>
+          </div>
+
+          <div id="spotifyConnect" class="stack">
+            <button class="primary big" id="spotifyLogin">Connect Spotify</button>
+            <p class="small muted" id="spotifySetup"></p>
+          </div>
+
+          <div id="spotifyControls" class="stack hidden">
+            <form class="row" id="spotifyForm">
+              <input class="grow" type="text" id="spotifyQuery" placeholder="Search Spotify…" autocomplete="off" />
+              <button class="primary" type="submit">Search</button>
+            </form>
+            <div class="list" id="spotifyResults"></div>
+
+            <div class="row between">
+              <div class="grow" style="min-width: 0">
+                <div class="title" id="spotifyNowPlaying">Nothing playing</div>
+                <div class="small muted" id="spotifyNowSub"></div>
+              </div>
+            </div>
+            <div class="row" style="gap: 8px">
+              <button class="primary grow" id="spotifyPlayPause" disabled>Play</button>
+              <button id="spotifyStop" disabled>Stop</button>
+            </div>
+            <div class="small muted" id="spotifyReady"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live mode ----------------------------------------------------- -->
+      <div id="liveMode" class="stack hidden">
+        <div class="card stack">
+          <h2>Live input</h2>
+          <p class="small muted">
+            Streams this device's microphone or a shared tab to every phone. Expect roughly half a
+            second of delay and looser alignment than file playback — this is for a live set or a
+            speech, not for making phones sound like one speaker.
+          </p>
+          <div class="row" style="gap: 8px">
+            <button class="primary grow" id="liveStart">Start broadcasting</button>
+            <button class="danger hidden" id="liveStop">Stop</button>
+          </div>
+          <div class="seg" id="liveSourceSeg">
+            <button data-source="microphone" aria-pressed="true">Microphone</button>
+            <button data-source="tab" aria-pressed="false">Tab / screen audio</button>
+          </div>
+          <div class="small muted" id="liveStatus"></div>
+        </div>
+      </div>
+
+      <!-- Alignment ----------------------------------------------------- -->
+      <div class="card stack">
+        <div class="row between">
+          <h2>Alignment</h2>
+          <span class="pill" id="alignStatus"><span class="dot"></span><span>not measured</span></span>
+        </div>
+        <p class="small muted">
+          Browsers don't report their real speaker latency — that's why some phones sound
+          ahead and some behind. This measures it: each phone chirps in turn while this
+          one listens, then they're trimmed to match each other.
+        </p>
+        <div class="row wrap" style="gap: 8px">
+          <button class="primary grow" id="alignStart">Align speakers by ear</button>
+          <button id="metronome" aria-pressed="false">Line-up clicks</button>
+        </div>
+        <div class="scrub hidden" id="alignBar"><div class="fill" id="alignFill"></div></div>
+        <div class="small muted" id="alignDetail">
+          Put this phone about an arm's length from the others, somewhere quiet, and turn
+          everything up.
+        </div>
+        <div class="list hidden" id="alignResults"></div>
+      </div>
+
+      <!-- Speakers ------------------------------------------------------ -->
+      <div class="card stack">
+        <div class="row between">
+          <h2>Speakers</h2>
+          <div class="row" style="gap: 8px">
+            <button class="icon" id="autoStereo">Auto stereo</button>
+            <button class="icon" id="allStereo">All stereo</button>
+          </div>
+        </div>
+        <div class="list" id="speakers">
+          <div class="empty">No phones yet. Have people scan the code above.</div>
+        </div>
+      </div>
+
+      <p class="small muted" style="text-align: center">
+        Sync accuracy <span class="mono" id="syncAccuracy">—</span> · keep this screen open
+      </p>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <script type="module" src="/js/host.js"></script>
+  </body>
+</html>

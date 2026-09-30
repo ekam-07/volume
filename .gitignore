@@ -1,0 +1,15 @@
+node_modules/
+
+# Uploaded and imported audio. Large, and not ours to redistribute.
+uploads/
+
+# Local secrets — SPOTIFY_CLIENT_ID, JAMENDO_CLIENT_ID
+.env
+.env.*
+
+# Local Claude Code state (launch.json is shared; settings.local.json is not)
+.claude/settings.local.json
+
+*.log
+.DS_Store
+Thumbs.db

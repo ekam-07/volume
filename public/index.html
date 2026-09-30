@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#07080a" />
+    <title>volume — many phones, one speaker</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="wrap stack">
+      <div class="brand">
+        <div class="mark">◍</div>
+        <div class="name">volume</div>
+      </div>
+
+      <div class="card stack">
+        <div>
+          <h1>Turn every phone in the room into one speaker</h1>
+          <p class="muted small" style="margin-top: 8px">
+            One phone hosts. Everyone else scans a code. The song plays on all of them at the same
+            instant, aligned to within a few milliseconds.
+          </p>
+        </div>
+        <button class="primary big" id="create">Start a room</button>
+      </div>
+
+      <div class="card stack">
+        <h2>Join a room</h2>
+        <form class="row" id="joinForm">
+          <input
+            class="grow mono"
+            id="code"
+            type="text"
+            inputmode="text"
+            autocapitalize="characters"
+            autocomplete="off"
+            spellcheck="false"
+            maxlength="4"
+            placeholder="CODE"
+            style="text-transform: uppercase; letter-spacing: 0.2em"
+          />
+          <button class="primary" type="submit">Join</button>
+        </form>
+      </div>
+
+      <div class="card stack small muted">
+        <h2 style="color: var(--text)">How to get everyone connected</h2>
+        <p>
+          <strong style="color: var(--text)">Same Wi-Fi</strong> — best case. Lowest latency,
+          nothing to set up.
+        </p>
+        <p>
+          <strong style="color: var(--text)">No Wi-Fi?</strong> Turn on the host phone's hotspot and
+          have everyone join that. It works fully offline and is just as tight.
+        </p>
+        <p>
+          <strong style="color: var(--text)">Everyone on mobile data?</strong> Deploy this server to
+          the internet and phones can join from anywhere — the song is downloaded before it plays,
+          so the network isn't in the audio path.
+        </p>
+        <p style="margin-top: 4px">
+          Bluetooth can't do this: phones can't act as Bluetooth speakers for each other, and its
+          100–200&nbsp;ms variable latency is far too loose to sound like one source.
+        </p>
+      </div>
+
+      <div id="addresses" class="card stack small hidden">
+        <h2>Open on other devices</h2>
+        <div class="list" id="addressList"></div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script type="module">
+      import { toast } from '/js/ui.js';
+
+      const create = document.getElementById('create');
+      create.addEventListener('click', async () => {
+        create.disabled = true;
+        create.textContent = 'Creating…';
+        try {
+          const res = await fetch('/api/rooms', { method: 'POST' });
+          if (!res.ok) throw new Error('could not create room');
+          const { code } = await res.json();
+          location.href = `/host.html?room=${code}`;
+        } catch (err) {
+          toast(err.message, true);
+          create.disabled = false;
+          create.textContent = 'Start a room';
+        }
+      });
+
+      document.getElementById('joinForm').addEventListener('submit', (event) => {
+        event.preventDefault();
+        const code = document.getElementById('code').value.trim().toUpperCase();
+        if (code.length < 4) return toast('Enter the 4-character room code.', true);
+        location.href = `/join.html?room=${code}`;
+      });
+
+      // On a laptop, show the LAN URLs so phones can be pointed at this server.
+      if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) {
+        fetch('/api/network')
+          .then((r) => r.json())
+          .then(({ addresses }) => {
+            if (!addresses?.length) return;
+            const box = document.getElementById('addresses');
+            const list = document.getElementById('addressList');
+            list.innerHTML = '';
+            for (const url of addresses) {
+              const row = document.createElement('div');
+              row.className = 'item';
+              row.innerHTML = `<span class="grow mono title">${url}</span>`;
+              const copy = document.createElement('button');
+              copy.className = 'icon';
+              copy.textContent = 'Copy';
+              copy.addEventListener('click', async () => {
+                await navigator.clipboard?.writeText(url);
+                toast('Copied');
+              });
+              row.appendChild(copy);
+              list.appendChild(row);
+            }
+            box.classList.remove('hidden');
+          })
+          .catch(() => {});
+      }
+    </script>
+  </body>
+</html>

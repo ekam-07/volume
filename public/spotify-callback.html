@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#07080a" />
+    <title>Connecting Spotify — volume</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card hero">
+        <div class="orb" id="orb">◍</div>
+        <div>
+          <h1 id="heading">Connecting Spotify…</h1>
+          <p class="muted small" id="detail" style="margin-top: 8px">One moment.</p>
+        </div>
+        <a href="/" id="back" class="hidden"><button>Back</button></a>
+      </div>
+    </div>
+
+    <script type="module">
+      import { completeLogin } from '/js/spotify.js';
+
+      const params = new URLSearchParams(location.search);
+      const heading = document.getElementById('heading');
+      const detail = document.getElementById('detail');
+
+      function fail(message) {
+        document.getElementById('orb').textContent = '⚠';
+        heading.textContent = 'Could not connect';
+        detail.textContent = message;
+        document.getElementById('back').classList.remove('hidden');
+      }
+
+      const error = params.get('error');
+      const code = params.get('code');
+
+      if (error) {
+        fail(error === 'access_denied' ? 'You declined the Spotify permission.' : error);
+      } else if (!code) {
+        fail('Spotify did not send an authorisation code.');
+      } else {
+        try {
+          const { spotifyClientId } = await (await fetch('/api/config')).json();
+          if (!spotifyClientId) throw new Error('SPOTIFY_CLIENT_ID is not set on the server.');
+          const returnTo = await completeLogin(spotifyClientId, code);
+          location.replace(returnTo);
+        } catch (err) {
+          fail(err.message);
+        }
+      }
+    </script>
+  </body>
+</html>
